@@ -16,12 +16,13 @@ Environment:
 --*/
 
 #include "Driver.h"
-#include "Driver.tmh"
+//#include "Driver.tmh"
 #include<fstream>
 #include<sstream>
 #include<string>
 #include<tuple>
 #include<vector>
+#include<Windows.h>
 
 using namespace std;
 using namespace Microsoft::IndirectDisp;
@@ -141,7 +142,30 @@ NTSTATUS IddSampleDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT pDeviceInit)
     // If the driver wishes to handle custom IoDeviceControl requests, it's necessary to use this callback since IddCx
     // redirects IoDeviceControl requests to an internal queue. This sample does not need this.
     // IddConfig.EvtIddCxDeviceIoControl = IddSampleIoDeviceControl;
-    loadOptions("C:\\IddSampleDriver\\option.txt");
+
+    // Read the options from the file
+    auto size = GetEnvironmentVariableA("IddConfigPath", nullptr, 0);
+    std::string buf(size, 0);
+    GetEnvironmentVariableA("IddConfigPath", &buf[0], size);
+    
+    // Fall back to a default path if the environment variable is not set
+    std::string pathString = buf.length() != 0 ? buf : "C:\\IddSampleDriver\\option.txt";
+
+    try {
+        loadOptions(pathString);
+    }
+    catch (const std::exception&) {
+        monitorModes.push_back({ 640, 480, 60 });
+        monitorModes.push_back({ 1280, 720, 60 });
+        monitorModes.push_back({ 1366, 768, 60 });
+        monitorModes.push_back({ 1440, 900, 60 });
+        monitorModes.push_back({ 1600, 900, 60 });
+        monitorModes.push_back({ 1920, 1080, 60 });
+        monitorModes.push_back({ 1920, 1200, 60 });
+        monitorModes.push_back({ 2560, 1440, 60 });
+        monitorModes.push_back({ 2560, 1600, 60 });
+    }
+
     IddConfig.EvtIddCxAdapterInitFinished = IddSampleAdapterInitFinished;
 
     IddConfig.EvtIddCxParseMonitorDescription = IddSampleParseMonitorDescription;
